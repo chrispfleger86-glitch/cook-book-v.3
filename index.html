@@ -1,0 +1,270 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+  <meta name="theme-color" content="#173d2f">
+  <meta name="description" content="A private cookbook library: scan ISBNs, index recipes, digitise favourites, plan meals and build shopping lists.">
+  <title>My Cookbook Library</title>
+  <link rel="manifest" href="manifest.json">
+  <link rel="icon" href="icon-192.png">
+  <link rel="apple-touch-icon" href="icon-192.png">
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+<div id="app">
+  <header class="topbar">
+    <div class="brand-row">
+      <div>
+        <h1>My Cookbook Library</h1>
+        <p>Unlimited personal cookbook indexing</p>
+      </div>
+      <button id="installBtn" class="btn secondary small" hidden>Install app</button>
+    </div>
+    <nav class="tabs" aria-label="Main navigation">
+      <button class="tab active" data-page="library">Library</button>
+      <button class="tab" data-page="addbook">Add book</button>
+      <button class="tab" data-page="indexbook">Index</button>
+      <button class="tab" data-page="fullrecipe">Full recipe</button>
+      <button class="tab" data-page="cook">Cook</button>
+      <button class="tab" data-page="shopping">Shopping</button>
+      <button class="tab" data-page="backup">Backup</button>
+    </nav>
+  </header>
+
+  <main>
+    <section id="library" class="page">
+      <div class="hero card">
+        <div>
+          <h2>Every cookbook. One search box.</h2>
+          <p class="muted">Search recipes, ingredients, cuisines, countries, tags, authors and page numbers.</p>
+        </div>
+        <div class="searchbox"><input id="searchInput" type="search" placeholder="Try ‘aubergine’, ‘Thai’, ‘chicken’…"></div>
+        <div class="filter-row">
+          <label><input id="filterFav" type="checkbox"> Favourites</label>
+          <label><input id="filterFull" type="checkbox"> Full recipes</label>
+          <label><input id="filterCooked" type="checkbox"> Cooked</label>
+          <label><input id="filterWant" type="checkbox"> Want to cook</label>
+        </div>
+      </div>
+      <div id="stats" class="stats"></div>
+      <div id="libraryGrid" class="book-grid"></div>
+    </section>
+
+    <section id="addbook" class="page hidden">
+      <div class="grid two-col">
+        <article class="card">
+          <h2>1. Scan the ISBN</h2>
+          <p class="muted">Use the ISBN/EAN barcode on the back cover. Manual entry is always available.</p>
+          <div class="camera-box">
+            <video id="video" playsinline muted></video>
+            <div class="scan-line"></div>
+            <div id="cameraText">Camera preview</div>
+          </div>
+          <div class="row top-gap">
+            <button id="startScan" class="btn">Start camera</button>
+            <button id="stopScan" class="btn secondary">Stop</button>
+          </div>
+          <div id="scanStatus" class="status"></div>
+          <div class="field">
+            <label>Or enter ISBN-10 / ISBN-13</label>
+            <div class="row">
+              <input id="isbnInput" type="text" inputmode="numeric" placeholder="978…" class="grow">
+              <button id="lookupBook" class="btn">Look up</button>
+            </div>
+          </div>
+        </article>
+
+        <article class="card">
+          <h2>2. Confirm the cookbook</h2>
+          <div id="bookPreview" class="empty">Scan or enter an ISBN to identify the book.</div>
+          <div id="manualBook" class="hidden">
+            <div class="field"><label>Title</label><input id="bookTitle" type="text"></div>
+            <div class="field"><label>Author</label><input id="bookAuthor" type="text"></div>
+            <div class="field"><label>ISBN</label><input id="bookIsbn" type="text"></div>
+            <div class="field"><label>Cover image URL</label><input id="bookCover" type="text"></div>
+            <div class="field"><label>Country / region focus</label><input id="bookCountry" type="text" placeholder="e.g. Thailand"></div>
+            <div class="field"><label>Cuisine</label><input id="bookCuisine" type="text" placeholder="e.g. Thai"></div>
+            <button id="saveBook" class="btn">Add cookbook</button>
+          </div>
+        </article>
+      </div>
+    </section>
+
+    <section id="indexbook" class="page hidden">
+      <article class="card">
+        <h2>Index a cookbook</h2>
+        <p class="muted">Photograph contents or recipe index pages. The app extracts recipe names and page numbers in a batch.</p>
+        <div class="field"><label>Cookbook</label><select id="indexBookSelect"></select></div>
+        <div class="field"><label>Index / contents photos</label><input id="indexFiles" type="file" accept="image/*" capture="environment" multiple></div>
+        <div id="indexThumbs" class="thumbs"></div>
+        <div class="row">
+          <button id="runIndexOcr" class="btn">Read recipe index</button>
+          <span class="badge">OCR runs on your device</span>
+        </div>
+        <div id="indexStatus" class="status"></div>
+        <div id="indexProgress" class="progress hidden"><span></span></div>
+      </article>
+
+      <article id="indexResults" class="card hidden top-gap">
+        <h2>Recipes found</h2>
+        <p class="muted">Check the results before saving. OCR is good, not magical.</p>
+        <div class="row">
+          <button id="addRecipeRow" class="btn secondary">+ Add row</button>
+          <button id="removeBlankRows" class="btn ghost">Remove blanks</button>
+        </div>
+        <div id="recipeRows"></div>
+        <details>
+          <summary>Raw OCR text</summary>
+          <textarea id="indexRawText" class="top-gap"></textarea>
+        </details>
+        <div class="row top-gap">
+          <button id="saveIndex" class="btn">Save all recipes</button>
+          <button id="reparseIndex" class="btn secondary">Re-parse OCR</button>
+        </div>
+      </article>
+    </section>
+
+    <section id="fullrecipe" class="page hidden">
+      <article class="card">
+        <h2>Digitise a full recipe</h2>
+        <p class="muted">For favourites, photograph the actual recipe pages and save ingredients, method, servings, notes and your own food photo.</p>
+        <div class="field"><label>Cookbook</label><select id="fullBookSelect"></select></div>
+        <div class="field"><label>Existing indexed recipe (optional)</label><select id="existingRecipeSelect"></select></div>
+        <div class="field"><label>Recipe page photos</label><input id="fullFiles" type="file" accept="image/*" capture="environment" multiple></div>
+        <div id="fullThumbs" class="thumbs"></div>
+        <div class="row">
+          <button id="runFullOcr" class="btn">Read full recipe</button>
+          <button id="manualFullRecipe" class="btn secondary">Enter manually</button>
+        </div>
+        <div id="fullStatus" class="status"></div>
+        <div id="fullProgress" class="progress hidden"><span></span></div>
+      </article>
+
+      <article id="fullResults" class="card hidden top-gap">
+        <div class="field"><label>Recipe title</label><input id="fullTitle" type="text"></div>
+        <div class="grid two-col">
+          <div class="field"><label>Servings</label><input id="fullServings" type="text" placeholder="e.g. 4"></div>
+          <div class="field"><label>Page number(s)</label><input id="fullPages" type="text" placeholder="e.g. 42–43"></div>
+        </div>
+        <div class="grid two-col">
+          <div class="field"><label>Country</label><input id="fullCountry" type="text" placeholder="e.g. Cambodia"></div>
+          <div class="field"><label>Cuisine</label><input id="fullCuisine" type="text" placeholder="e.g. Khmer"></div>
+        </div>
+        <div class="grid two-col">
+          <div class="field"><label>Prep time</label><input id="fullPrepTime" type="text" placeholder="e.g. 20 mins"></div>
+          <div class="field"><label>Cook time</label><input id="fullCookTime" type="text" placeholder="e.g. 45 mins"></div>
+        </div>
+        <div class="field"><label>Tags</label><input id="fullTags" type="text" placeholder="comma separated: curry, quick, vegetarian"></div>
+        <div class="field"><label>Ingredients</label><textarea id="fullIngredients"></textarea></div>
+        <div class="field"><label>Method</label><textarea id="fullMethod"></textarea></div>
+        <div class="field"><label>Your notes</label><textarea id="fullNotes" placeholder="Changes, substitutions, what worked…"></textarea></div>
+        <div class="field"><label>Your finished-dish photo (optional)</label><input id="dishPhoto" type="file" accept="image/*" capture="environment"></div>
+        <details><summary>Raw OCR text</summary><textarea id="fullRawText" class="top-gap"></textarea></details>
+        <div class="row top-gap">
+          <button id="saveFullRecipe" class="btn">Save full recipe</button>
+          <button id="reparseFull" class="btn secondary">Re-parse OCR</button>
+        </div>
+      </article>
+    </section>
+
+    <section id="cook" class="page hidden">
+      <div class="grid two-col">
+        <article class="card">
+          <h2>What can I cook?</h2>
+          <p class="muted">Enter ingredients you have. Recipes are ranked by how many ingredient lines appear to match.</p>
+          <div class="field"><label>Ingredients in the cupboard/fridge</label><textarea id="pantryInput" placeholder="chicken&#10;coconut milk&#10;lime&#10;garlic"></textarea></div>
+          <button id="findCookable" class="btn">Find recipes</button>
+        </article>
+        <article class="card">
+          <h2>Cookable recipes</h2>
+          <div id="cookableResults" class="empty">Add some ingredients to see suggestions.</div>
+        </article>
+      </div>
+    </section>
+
+    <section id="shopping" class="page hidden">
+      <div class="grid two-col">
+        <article class="card">
+          <h2>Build a shopping list</h2>
+          <p class="muted">Select full recipes and choose the number of servings you want. Quantities are scaled where the ingredient line begins with a recognisable number or fraction.</p>
+          <div id="shoppingRecipePicker"></div>
+          <button id="generateShopping" class="btn top-gap">Generate list</button>
+        </article>
+        <article class="card">
+          <div class="row between">
+            <h2>Shopping list</h2>
+            <button id="copyShopping" class="btn secondary small">Copy</button>
+          </div>
+          <textarea id="shoppingOutput" class="shopping-output" placeholder="Your combined list will appear here."></textarea>
+        </article>
+      </div>
+    </section>
+
+    <section id="backup" class="page hidden">
+      <div class="grid three-col">
+        <article class="card">
+          <h2>Back up</h2>
+          <p class="muted">Download books, recipes, notes, history and photos as JSON.</p>
+          <button id="exportJson" class="btn">Download backup</button>
+        </article>
+        <article class="card">
+          <h2>Restore</h2>
+          <input id="importFile" type="file" accept=".json,application/json">
+          <button id="importJson" class="btn secondary top-gap">Restore backup</button>
+        </article>
+        <article class="card">
+          <h2>Privacy</h2>
+          <p class="muted small">Your cookbook library lives in this browser using IndexedDB. OCR runs in the browser. ISBN metadata is fetched from Open Library.</p>
+          <button id="wipeData" class="btn danger">Delete local library</button>
+        </article>
+      </div>
+    </section>
+  </main>
+</div>
+
+<dialog id="recipeDialog">
+  <div class="dialog-body">
+    <div class="row between">
+      <div>
+        <h2 id="dlgTitle"></h2>
+        <div id="dlgMeta" class="muted"></div>
+      </div>
+      <button id="closeDialog" class="btn ghost small">Close</button>
+    </div>
+
+    <img id="dlgPhoto" class="dish-photo hidden" alt="Finished dish">
+    <div id="dlgBadges" class="tag-row"></div>
+
+    <div id="dlgActions" class="action-row">
+      <button id="dlgFav" class="btn secondary">☆ Favourite</button>
+      <button id="dlgCooked" class="btn secondary">✓ Cooked</button>
+      <button id="dlgWant" class="btn secondary">＋ Want to cook</button>
+      <button id="dlgPrint" class="btn secondary">Print / PDF</button>
+      <label class="rating-label">Rating
+        <select id="dlgRating">
+          <option value="0">Not rated</option>
+          <option value="1">★</option>
+          <option value="2">★★</option>
+          <option value="3">★★★</option>
+          <option value="4">★★★★</option>
+          <option value="5">★★★★★</option>
+        </select>
+      </label>
+    </div>
+
+    <div id="scaleControls" class="scale-controls hidden">
+      <label>Scale from <input id="scaleFrom" type="number" min="1" step="1"></label>
+      <span>to</span>
+      <label><input id="scaleTo" type="number" min="1" step="1"> servings</label>
+      <button id="applyScale" class="btn secondary small">Scale</button>
+    </div>
+
+    <div id="dlgBody"></div>
+  </div>
+</dialog>
+
+<script src="https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js"></script>
+<script src="app.js"></script>
+</body>
+</html>
