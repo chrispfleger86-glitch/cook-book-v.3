@@ -44,3 +44,8 @@ OCR uses Tesseract.js loaded from a CDN. You therefore need an internet connecti
 For camera access and app installation on Android, serve these files over HTTPS. GitHub Pages, Netlify and Cloudflare Pages are suitable static hosts.
 
 See INSTALL_S24_ULTRA.md for phone installation.
+
+
+## V3.1 installability patch
+
+Includes explicit `prefer_related_applications: false`, 144/192/512 px icons, separate `manifest.webmanifest`, explicit icon links and `diagnostics.html` for Android PWA troubleshooting.

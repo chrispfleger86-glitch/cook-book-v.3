@@ -1,0 +1,16 @@
+<!doctype html>
+<html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Cookbook App Diagnostics</title>
+<style>body{font:16px system-ui;max-width:720px;margin:30px auto;padding:0 18px}li{margin:10px 0}.ok{color:#176b3a}.bad{color:#a22}code{background:#eee;padding:2px 5px;border-radius:4px}</style></head>
+<body><h1>Cookbook App Diagnostics</h1><ul id="out"></ul>
+<script>
+(async()=>{
+ const out=document.getElementById('out');
+ const add=(ok,msg)=>out.insertAdjacentHTML('beforeend',`<li class="${ok?'ok':'bad'}">${ok?'✓':'✗'} ${msg}</li>`);
+ add(location.protocol==='https:' || location.hostname==='localhost',`Secure context: ${location.protocol}`);
+ try{const r=await fetch('manifest.webmanifest',{cache:'no-store'});add(r.ok,`Manifest HTTP ${r.status}`);if(r.ok){const m=await r.json();add(!!m.name,'Manifest name');add(!!m.start_url,'Manifest start_url');add(['standalone','fullscreen','minimal-ui','window-controls-overlay'].includes(m.display),`Display: ${m.display}`);add((m.icons||[]).some(i=>String(i.sizes).includes('192x192')),'192×192 icon declared');add((m.icons||[]).some(i=>String(i.sizes).includes('512x512')),'512×512 icon declared');}}
+ catch(e){add(false,'Manifest fetch failed: '+e.message)}
+ try{const reg=await navigator.serviceWorker.register('service-worker.js');add(!!reg,'Service worker registered')}catch(e){add(false,'Service worker failed: '+e.message)}
+ for(const f of ['icon-144.png','icon-192.png','icon-512.png']){try{const r=await fetch(f,{cache:'no-store'});add(r.ok,`${f}: HTTP ${r.status}`)}catch(e){add(false,`${f} failed`)}}
+})();
+</script></body></html>
